@@ -6,7 +6,9 @@ import static com.google.common.base.Verify.verify;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.TreeMap;
 import java.util.stream.IntStream;
 
 import javax.json.bind.annotation.JsonbCreator;
@@ -20,15 +22,17 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.PeekingIterator;
+import com.google.common.collect.UnmodifiableIterator;
 import com.google.common.math.Stats;
 
 import io.github.oliviercailloux.j_voting.Alternative;
 import io.github.oliviercailloux.minimax.elicitation.Oracle;
-import io.github.oliviercailloux.minimax.elicitation.UpdateablePreferenceKnowledge;
 import io.github.oliviercailloux.minimax.elicitation.Question;
 import io.github.oliviercailloux.minimax.elicitation.QuestionType;
+import io.github.oliviercailloux.minimax.elicitation.UpdateablePreferenceKnowledge;
 import io.github.oliviercailloux.minimax.regret.RegretComputer;
 import io.github.oliviercailloux.minimax.regret.Regrets;
 
@@ -77,6 +81,8 @@ public class Run {
 	private final ImmutableList<Integer> durationsMs;
 	@JsonbTransient
 	private ImmutableList<Regrets> regrets;
+	@JsonbTransient
+	private Map<Integer, Regrets> regretsMap;
 	private ImmutableList<Double> losses;
 
 	private Run(Oracle oracle, List<Question> questions, List<Integer> durationsMs) {
@@ -87,6 +93,7 @@ public class Run {
 		this.questions = ImmutableList.copyOf(questions);
 		this.durationsMs = ImmutableList.copyOf(durationsMs);
 		this.regrets = null;
+		this.regretsMap = new TreeMap<>();
 		verify((getNbQVoters() + getNbQCommittee()) == questions.size());
 		getQuestionTimesMs();
 		getTotalTimeMs();
@@ -153,7 +160,18 @@ public class Run {
 	@JsonbTransient
 	public Regrets getMinimalMaxRegrets(int i) {
 		checkArgument(i <= questions.size());
-		return getMinimalMaxRegrets().get(i);
+		if (!regretsMap.containsKey(i)) {
+			final UpdateablePreferenceKnowledge knowledge = UpdateablePreferenceKnowledge
+					.given(oracle.getAlternatives(), oracle.getProfile().keySet());
+			final RegretComputer rc = new RegretComputer(knowledge);
+
+			for (Question question : Iterables.limit(questions, i)) {
+				knowledge.update(oracle.getPreferenceInformation(question));
+			}
+			final Regrets computedRegrets = rc.getMinimalMaxRegrets();
+			regretsMap.put(i, computedRegrets);
+		}
+		return regretsMap.get(i);
 	}
 
 	/**
@@ -162,16 +180,32 @@ public class Run {
 	@JsonbTransient
 	public ImmutableList<Regrets> getMinimalMaxRegrets() {
 		if (regrets == null) {
-			final UpdateablePreferenceKnowledge knowledge = UpdateablePreferenceKnowledge.given(oracle.getAlternatives(), oracle.getProfile().keySet());
+			final UpdateablePreferenceKnowledge knowledge = UpdateablePreferenceKnowledge
+					.given(oracle.getAlternatives(), oracle.getProfile().keySet());
 			final RegretComputer rc = new RegretComputer(knowledge);
 
-			final ImmutableList.Builder<Regrets> builder = ImmutableList.builderWithExpectedSize(questions.size() + 1);
-			builder.add(rc.getMinimalMaxRegrets());
+			int questionsAsked = 0;
 
-			for (Question question : questions) {
-				knowledge.update(oracle.getPreferenceInformation(question));
-				builder.add(rc.getMinimalMaxRegrets());
+			final ImmutableList.Builder<Regrets> builder = ImmutableList.builderWithExpectedSize(questions.size() + 1);
+
+			final UnmodifiableIterator<Question> iterator = questions.iterator();
+			while (true) {
+				final Regrets thoseRegrets;
+				if (regretsMap.containsKey(questionsAsked)) {
+					thoseRegrets = regretsMap.get(questionsAsked);
+				} else {
+					thoseRegrets = rc.getMinimalMaxRegrets();
+					regretsMap.put(questionsAsked, thoseRegrets);
+				}
+				builder.add(thoseRegrets);
+
+				if (!iterator.hasNext()) {
+					break;
+				}
+				knowledge.update(oracle.getPreferenceInformation(iterator.next()));
+				++questionsAsked;
 			}
+			verify(questionsAsked == questions.size());
 
 			regrets = builder.build();
 		}

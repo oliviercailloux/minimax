@@ -9,6 +9,8 @@ import static io.github.oliviercailloux.minimax.Basics.v1;
 import static io.github.oliviercailloux.minimax.Basics.w;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Iterator;
 
 import org.apfloat.Apint;
@@ -22,11 +24,26 @@ import com.google.common.collect.ImmutableMap;
 import io.github.oliviercailloux.j_voting.VoterStrictPreference;
 import io.github.oliviercailloux.minimax.elicitation.Oracle;
 import io.github.oliviercailloux.minimax.elicitation.Question;
+import io.github.oliviercailloux.minimax.experiment.json.JsonConverter;
 import io.github.oliviercailloux.minimax.regret.Regrets;
 
 class RunnerTests {
 	@SuppressWarnings("unused")
 	private static final Logger LOGGER = LoggerFactory.getLogger(RunnerTests.class);
+
+	public static void main(String[] args) throws Exception {
+		/** Just some timing experiment. */
+		LOGGER.info("Reading runs.");
+		final Run run = JsonConverter
+				.toRuns(Files
+						.readString(Path.of("experiments/TableLinearity/Css, sushi.soc, k = 100000, ongoing.json")))
+				.getRun(0);
+		LOGGER.info("Read run.");
+		for (int i = 0; i <= run.getK(); i += 1000) {
+			final Regrets regrets = run.getMinimalMaxRegrets(i);
+			LOGGER.info("After {}: {}.", i, regrets.getMinimalMaxRegretValue());
+		}
+	}
 
 	@Test
 	void test() {
