@@ -8,6 +8,7 @@ import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
@@ -33,6 +34,7 @@ import io.github.oliviercailloux.json.PrintableJsonObject;
 import io.github.oliviercailloux.minimax.elicitation.Oracle;
 import io.github.oliviercailloux.minimax.elicitation.PreferenceInformation;
 import io.github.oliviercailloux.minimax.elicitation.Question;
+import io.github.oliviercailloux.minimax.elicitation.QuestionType;
 import io.github.oliviercailloux.minimax.elicitation.UpdateablePreferenceKnowledge;
 import io.github.oliviercailloux.minimax.experiment.json.JsonConverter;
 import io.github.oliviercailloux.minimax.experiment.other_formats.ToCsv;
@@ -48,17 +50,15 @@ public class VariousXps {
 
 	public static void main(String[] args) throws Exception {
 		final VariousXps variousXps = new VariousXps();
-
-		variousXps.runWithRandomOracles();
+		
 //		variousXps.runWithRandomOraclesOneVoter();
-//		variousXps.showFinalStats();
-//		variousXps.exportOracles(10, 20, 100);
 //		variousXps.tiesWithOracle1();
 //		variousXps.runWithOracle0();
-//		variousXps.analyzeQuestions();
-//		variousXps.summarizeXps();
+		variousXps.summarizeXps();
 	}
 
+	
+	
 	public void runWithRandomOracles() throws IOException {
 		final int m = 5;
 		final int n = 10;
@@ -182,19 +182,6 @@ public class VariousXps {
 		}
 	}
 
-	public void exportOracles(int m, int n, int count) throws IOException {
-		final ImmutableList.Builder<Oracle> builder = ImmutableList.<Oracle>builder();
-		for (int i = 0; i < count; ++i) {
-			final Oracle oracle = Oracle.build(Generator.genProfile(m, n),
-					Generator.genWeightsWithUnbalancedDistribution(m));
-			builder.add(oracle);
-		}
-		final ImmutableList<Oracle> oracles = builder.build();
-		final PrintableJsonObject json = JsonConverter.toJson(oracles);
-		Files.writeString(Path.of("experiments/Oracles/",
-				String.format("Oracles m = %d, n = %d, %d, unbalanced.json", m, n, count)), json.toString());
-	}
-
 	public Runs runs(StrategyFactory factory, Oracle oracle, int k, int nbRuns) throws IOException {
 		final ImmutableList<Oracle> oracles = Stream.generate(() -> oracle).limit(nbRuns)
 				.collect(ImmutableList.toImmutableList());
@@ -263,36 +250,6 @@ public class VariousXps {
 		final ImmutableList<Integer> ties = tiesBuilder.build();
 		LOGGER.debug("Questions:{}.", questions);
 		LOGGER.info("Ties: {}.", ties);
-	}
-
-	public void analyzeQuestions() throws Exception {
-		final int m = 10;
-		final int n = 20;
-		final int k = 500;
-		final int nbRuns = 10;
-		final Path json = Path.of("experiments", "TableLinearity", String
-				.format("Limited MAX, constrained to [], m = %d, n = %d, k = %d, nbRuns = %d.json", m, n, k, nbRuns));
-//		final Path json = Path.of("experiments",
-//				"Limited MAX, constrained to [], m = 10, n = 20, k = 500, nbRuns = 10.json");
-		final Runs runs = JsonConverter.toRuns(Files.readString(json));
-		for (Run run : runs.getRuns()) {
-			LOGGER.info("Run: {} qC, {} qV, mmr {}.", run.getNbQCommittee(), run.getNbQVoters(),
-					run.getMinimalMaxRegrets().get(k).getMinimalMaxRegretValue());
-		}
-		LOGGER.info("Stats nb qc: {}.", Stats.of(runs.getRuns().stream().mapToInt(Run::getNbQCommittee)));
-	}
-
-	public void showFinalStats() throws Exception {
-		final int m = 6;
-		final int n = 6;
-		final int k = 30;
-		final int nbRuns = 50;
-		final Path json = Path.of("experiments",
-				String.format("By MMR MAX, m = %d, n = %d, k = %d, nbRuns = %d.json", m, n, k, nbRuns));
-		final Runs runs = JsonConverter.toRuns(Files.readString(json));
-		LOGGER.info("qst {} , tot {}", runs.getQuestionTimeStats(), runs.getTotalTimeStats());
-//		LOGGER.info("Loss after k: {}.", Runner.asStringEstimator(runs.getLossesStats().get(k)));
-//		LOGGER.info("MMR after k: {}.", Runner.asStringEstimator(runs.getMinimalMaxRegretStats().get(k)));
 	}
 
 	public void summarizeXps() throws Exception {

@@ -35,14 +35,16 @@ public class TableLinearityXps {
 	public static void main(String[] args) throws Exception {
 		final TableLinearityXps tableLinXps = new TableLinearityXps();
 //		tableLinXps.runWithOracles(m, n, k, nbRuns);
-		tableLinXps.runWithOracles(9, 14, 300, 10);
-//		tableLinXps.runWithFile("sushi_short.soc", 800, 10);
-//		tableLinXps.runWithFile("skate.soc", 1000, 10);
+//		tableLinXps.runWithOracles(14, 9, 300, 10);
+		tableLinXps.runWithOracles(14, 9, 500, 10);
+		tableLinXps.runWithFile("sushi_short.soc", 450, 5);
+		tableLinXps.runWithFile("skate.soc", 120, 5);
+//		tableLinXps.runWithFile("tshirts.soc", 1000, 10);
 	}
 
 	public void runWithOracles(int m, int n, int k, int nbRuns) throws IOException {
 		StrategyFactory factory = StrategyFactory.limited();
-
+		
 		final Path json = Path.of("experiments/Oracles/",
 				String.format("Oracles m = %d, n = %d, %d.json", m, n, nbRuns));
 		final ImmutableList<Oracle> oracles = ImmutableList.copyOf(JsonConverter.toOracles(Files.readString(json)));
@@ -57,6 +59,8 @@ public class TableLinearityXps {
 	public void runWithFile(String file, int k, int nbRuns) throws IOException {
 		StrategyFactory factory = StrategyFactory.limited();
 
+//		StrategyFactory factory = StrategyFactory.css();
+		
 		String path = "experiments/Oracles/" + file;
 		try (InputStream socStream = new FileInputStream(path)) {
 			final ProfileI p = new ReadProfile().createProfileFromStream(socStream);
