@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.text.NumberFormat;
+import java.util.LinkedList;
 import java.util.Locale;
 import java.util.stream.Stream;
 
@@ -31,10 +32,11 @@ public class AnalyzeJsons {
 
 	public static void main(String[] args) throws Exception {
 		final AnalyzeJsons analyzeJsons = new AnalyzeJsons();
-		//final Path outDir = Path.of("experiments/TableLinearity");
-		//analyzeJsons.writeFileMMRtoCsv(outDir.resolve("Css, sushi.soc, k = 100000, ongoing.json"), outDir.resolve("Css, sushi.soc, k = 100000, ongoing.csv"),100);
-		//findAndAnalyze();
-		analyzeJsons.analyzePenalty("analyzePenalty.txt");
+		final Path outDir = Path.of("experiments/RealData");
+		analyzeJsons.writeFileMMRtoCsv(outDir.resolve("Css, sushi_short.soc, k = 600, nbRuns = 1.json"),
+				outDir.resolve("Css, sushi_short.soc.csv"), 1);
+		// findAndAnalyze();
+		// analyzeJsons.analyzePenalty("analyzePenalty.txt");
 	}
 
 	public void analyzePenalty(String outFile) throws Exception {
@@ -42,19 +44,19 @@ public class AnalyzeJsons {
 		Files.createDirectories(outDir);
 		Files.deleteIfExists(outDir.resolve(outFile));
 		final Path file = Files.createFile(outDir.resolve(outFile));
-		analyzeQuestions("Limited (×1.1) MAX, m = 14, n = 9, k = 500, nbRuns = 10.json",file);
-		analyzeQuestions("Limited (×1.0) MAX, m = 14, n = 9, k = 500, nbRuns = 10.json",file);
-		analyzeQuestions("Limited (×1.0 +1e-6) MAX, m = 14, n = 9, k = 500, nbRuns = 10.json",file);
-		analyzeQuestions("Limited (×1.1) MAX, skate.soc, k = 120, nbRuns = 10.json",file);
-		analyzeQuestions("Limited (×1.0) MAX, skate.soc, k = 120, nbRuns = 10.json",file);
-		analyzeQuestions("Limited (×1.0 +1e-6) MAX, skate.soc, k = 120, nbRuns = 5.json",file);
-		analyzeQuestions("Limited (×1.1) MAX, sushi_short.soc, k = 800, nbRuns = 10.json",file);
-		analyzeQuestions("Limited (×1.0) MAX, sushi_short.soc, k = 450, nbRuns = 10.json",file);
-		analyzeQuestions("Limited (×1.0 +1e-6) MAX, sushi_short.soc, k = 450, nbRuns = 5.json",file);
+		analyzeQuestions("Limited (×1.1) MAX, m = 14, n = 9, k = 500, nbRuns = 10.json", file);
+		analyzeQuestions("Limited (×1.0) MAX, m = 14, n = 9, k = 500, nbRuns = 10.json", file);
+		analyzeQuestions("Limited (×1.0 +1e-6) MAX, m = 14, n = 9, k = 500, nbRuns = 10.json", file);
+		analyzeQuestions("Limited (×1.1) MAX, skate.soc, k = 120, nbRuns = 10.json", file);
+		analyzeQuestions("Limited (×1.0) MAX, skate.soc, k = 120, nbRuns = 10.json", file);
+		analyzeQuestions("Limited (×1.0 +1e-6) MAX, skate.soc, k = 120, nbRuns = 5.json", file);
+		analyzeQuestions("Limited (×1.1) MAX, sushi_short.soc, k = 800, nbRuns = 10.json", file);
+		analyzeQuestions("Limited (×1.0) MAX, sushi_short.soc, k = 450, nbRuns = 10.json", file);
+		analyzeQuestions("Limited (×1.0 +1e-6) MAX, sushi_short.soc, k = 450, nbRuns = 5.json", file);
 	}
-	
+
 	public void analyzeQuestions(String fileName, Path fileOut) throws Exception {
-		Files.writeString(fileOut, fileName+"\n",StandardOpenOption.APPEND);
+		Files.writeString(fileOut, fileName + "\n", StandardOpenOption.APPEND);
 		final Path json = Path.of("experiments", "TableLinearity", fileName);
 		final Runs runs = JsonConverter.toRuns(Files.readString(json));
 		for (Run run : runs.getRuns()) {
@@ -77,8 +79,8 @@ public class AnalyzeJsons {
 			}
 			verify(countCommBef + countCommAft == run.getNbQCommittee());
 			verify(countVotBef + countVotAft == run.getNbQVoters());
-			Files.writeString(fileOut, String.format("Run: MMR>0 %d qC, %d qV -- MMR=0 %d qC, %d qV.", countCommBef, countVotBef, countCommAft,
-					countVotAft)+"\n", StandardOpenOption.APPEND);
+			Files.writeString(fileOut, String.format("Run: MMR>0 %d qC, %d qV -- MMR=0 %d qC, %d qV.", countCommBef,
+					countVotBef, countCommAft, countVotAft) + "\n", StandardOpenOption.APPEND);
 			LOGGER.info("Run");
 		}
 	}
@@ -89,66 +91,34 @@ public class AnalyzeJsons {
 		final Runs runs = JsonConverter.toRuns(Files.readString(file));
 		Files.writeString(fileOut, ToCsv.toCsv(runs, 1));
 	}
-	
+
 	public void writeFileMMRtoCsv(Path file, Path fileOut, int step) throws Exception {
 		Files.deleteIfExists(fileOut);
 		Files.createFile(fileOut);
-		
-		final Run run = JsonConverter.toRuns(Files.readString(file)).getRun(0);
-		ImmutableList<Regrets> regrets = run.getMinimalMaxRegrets();
-		
+		LOGGER.info("Reading runs.");
+		final Runs runs = JsonConverter.toRuns(Files.readString(file));
 		final StringWriter stringWriter = new StringWriter();
 		final NumberFormat formatter = NumberFormat.getNumberInstance(Locale.ENGLISH);
 		formatter.setMaximumFractionDigits(2);
 		final CsvWriter writer = new CsvWriter(stringWriter, new CsvWriterSettings());
 		writer.writeHeaders("k", "MMR avg");
 
-		for (int k=0; k< run.getK();k=k+step) {
-			LOGGER.info("k {}",k);
-			writer.addValue("k", k);
-			double mmr = regrets.get(k).getMinimalMaxRegretValue();
+		for (int i = 0; i <= runs.getK(); i += step) {
+			LinkedList<Double> mmrs = new LinkedList<>();
+			for (Run run : runs.getRuns()) {
+				final Regrets regrets = run.getMinimalMaxRegrets(i);
+				mmrs.add(regrets.getMinimalMaxRegretValue());
+			}
+			Stats mmrStat = Stats.of(mmrs);
+			double mmr = mmrStat.mean();
+			writer.addValue("k", i);
 			writer.addValue("MMR avg", formatter.format(mmr));
-			System.out.println(k);
 			writer.writeValuesToRow();
+			LOGGER.info("MMR Avg After {}: {}.", i, mmr);
 		}
-		Files.writeString(fileOut, writer.toString());
+		Files.writeString(fileOut, stringWriter.toString());
 	}
-	
-	public void writeFileCsv(Path file, Path fileOut, int step) throws Exception {
-		Files.deleteIfExists(fileOut);
-		Files.createFile(fileOut);
-		final Runs runs = JsonConverter.toRuns(Files.readString(file));
-		final Run run = runs.getRun(0);
-		final StringWriter stringWriter = new StringWriter();
-		final NumberFormat formatter = NumberFormat.getNumberInstance(Locale.ENGLISH);
-		formatter.setMaximumFractionDigits(2);
-		final CsvWriter writer = new CsvWriter(stringWriter, new CsvWriterSettings());
-		writer.writeHeaders("k", "MMR min", "MMR avg", "MMR max", "MMR σ (est.)", "Loss min", "Loss avg", "Loss max",
-				"Loss σ (est.)");
-		for (int k=0; k< run.getK();k=k+step) {
-			LOGGER.info("k {}",k);
-			writer.addValue("k", k);
-			{
-				final Stats stat = runs.getMinimalMaxRegretStats().get(k);
-				writer.addValue("MMR min", formatter.format(stat.min()));
-				writer.addValue("MMR avg", formatter.format(stat.mean()));
-				writer.addValue("MMR max", formatter.format(stat.max()));
-				final String dev = stat.count() >= 2 ? formatter.format(stat.sampleStandardDeviation()) : "";
-				writer.addValue("MMR σ (est.)", dev);
-			}
-			{
-				final Stats stat = runs.getLossesStats().get(k);
-				writer.addValue("Loss min", formatter.format(stat.min()));
-				writer.addValue("Loss avg", formatter.format(stat.mean()));
-				writer.addValue("Loss max", formatter.format(stat.max()));
-				final String dev = stat.count() >= 2 ? formatter.format(stat.sampleStandardDeviation()) : "";
-				writer.addValue("Loss σ (est.)", dev);
-			}
-			writer.writeValuesToRow();
-		}
-		Files.writeString(fileOut, writer.toString());
-	}
-	
+
 	public static void findAndAnalyze() throws Exception {
 		final Path inDir = Path.of("experiments/Small/");
 		final ImmutableSet<Path> jsonPaths;
@@ -176,7 +146,7 @@ public class AnalyzeJsons {
 			++i;
 		}
 	}
-	
+
 	public void analyzeQuestions() throws Exception {
 		final int m = 10;
 		final int n = 20;

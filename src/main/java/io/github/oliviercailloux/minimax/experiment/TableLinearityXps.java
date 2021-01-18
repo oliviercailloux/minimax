@@ -36,10 +36,10 @@ public class TableLinearityXps {
 		final TableLinearityXps tableLinXps = new TableLinearityXps();
 //		tableLinXps.runWithOracles(m, n, k, nbRuns);
 //		tableLinXps.runWithOracles(14, 9, 300, 10);
-		tableLinXps.runWithOracles(14, 9, 500, 10);
-		tableLinXps.runWithFile("sushi_short.soc", 450, 5);
-		tableLinXps.runWithFile("skate.soc", 120, 5);
-//		tableLinXps.runWithFile("tshirts.soc", 1000, 10);
+//		tableLinXps.runWithOracles(6, 6, 90, 1);
+//		tableLinXps.runWithFile("sushi_short.soc", 450, 5);
+//		tableLinXps.runWithFile("skate.soc", 120, 5);
+		tableLinXps.runWithFile("tshirts.soc", 1000, 10);
 	}
 
 	public void runWithOracles(int m, int n, int k, int nbRuns) throws IOException {
