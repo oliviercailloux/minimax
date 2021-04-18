@@ -91,7 +91,7 @@ public class VoterStrictPreference {
 	/**
 	 * Returns the rank of the given alternative.
 	 *
-	 * @param alternative not <code>null</code>.
+	 * @param alternative not {@code null}.
 	 * @return ≥ 1.
 	 * @throws IllegalArgumentException if the given alternative is not in this
 	 *                                  preference.

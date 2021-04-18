@@ -25,7 +25,7 @@ public class Preference {
 	protected List<Set<Alternative>> preference;
 
 	/**
-	 * @param preferences <code>not null</code> a list of sets of alternatives. In a
+	 * @param preferences {@code not null} a list of sets of alternatives. In a
 	 *                    set, the alternatives are equally ranked. The sets are
 	 *                    sorted by preference in the list. If an alternative is
 	 *                    present several times, an IllegalArgumentException is
@@ -44,7 +44,7 @@ public class Preference {
 
 	/**
 	 *
-	 * @param position not <code>null</code>
+	 * @param position not {@code null}
 	 * @return the alternative at the position given in the strict preference
 	 */
 	public Alternative getAlternative(Integer position) throws IndexOutOfBoundsException {
@@ -94,7 +94,7 @@ public class Preference {
 	}
 
 	/**
-	 * @param p <code>not null</code>
+	 * @param p {@code not null}
 	 * @return whether the calling preference is equal to the preference as a
 	 *         parameter.
 	 */
@@ -132,7 +132,7 @@ public class Preference {
 	}
 
 	/**
-	 * @param alter <code>not null</code>
+	 * @param alter {@code not null}
 	 * @return whether the preference contains the alternative given as parameter
 	 */
 	public boolean contains(Alternative alter) {
@@ -143,7 +143,7 @@ public class Preference {
 	}
 
 	/**
-	 * @param p <code>not null</code>
+	 * @param p {@code not null}
 	 * @return whether the preferences are about the same alternatives exactly (not
 	 *         necessarily in the same order).
 	 */
@@ -155,7 +155,7 @@ public class Preference {
 	}
 
 	/**
-	 * @param p <code>not null</code>
+	 * @param p {@code not null}
 	 * @return whether the parameter preference contains all the alternatives in the
 	 *         calling preference
 	 */
@@ -175,7 +175,7 @@ public class Preference {
 
 	/**
 	 *
-	 * @param alter not <code>null</code>. If the alternative is not in the
+	 * @param alter not {@code null}. If the alternative is not in the
 	 *              preference, it throws an IllegalArgumentException.
 	 * @return the rank of the alternative given in the Preference.
 	 */
@@ -198,7 +198,7 @@ public class Preference {
 
 	/**
 	 *
-	 * @param preferences not <code> null </code> a list of sets of alternatives
+	 * @param preferences not {@code  null } a list of sets of alternatives
 	 * @return a set of alternatives containing all the alternatives of the list of
 	 *         set of alternative given. If an alternative appears several times in
 	 *         the list of sets, it appears only once in the new set.
@@ -221,7 +221,7 @@ public class Preference {
 
 	/**
 	 *
-	 * @param list not <code> null </code>
+	 * @param list not {@code  null }
 	 * @return the size of a list of alternative sets
 	 */
 	public static int size(List<Set<Alternative>> list) {

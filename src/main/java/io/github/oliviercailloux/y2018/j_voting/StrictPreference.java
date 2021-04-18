@@ -54,7 +54,7 @@ public class StrictPreference extends Preference {
 
 	/**
 	 * @param list
-	 *            a list of alternatives not <code> null </code>
+	 *            a list of alternatives not {@code  null }
 	 * @return a list of set of alternatives. each set is composed of one
 	 *         alternative
 	 */
@@ -74,7 +74,7 @@ public class StrictPreference extends Preference {
 
 	/**
 	 * @param sets
-	 *            not <code>null</code>
+	 *            not {@code null}
 	 * @return a list of alternatives from a list of sets of alternatives.
 	 */
 	public static List<Alternative> listSetAlternativeToList(List<Set<Alternative>> sets) {
@@ -94,7 +94,7 @@ public class StrictPreference extends Preference {
 	/**
 	 * 
 	 * @param position
-	 *            not <code>null</code>
+	 *            not {@code null}
 	 * @return the alternative at the position given in the strict preference
 	 */
 	@Override
