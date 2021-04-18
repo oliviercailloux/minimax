@@ -97,3 +97,9 @@ m = 6, n = 10, k = 100, weights uniformly distributed [400 runs each time].
 == how complete?
 TODO Olivier: Ask 2m questions randomly to a voter. Then compute the proportion of number of edges known (in the transitive closure) compared to the total number of edges = m × (m − 1) / 2.
 
+== Comparison
+On the 15th Jan 2021.
+m = 6, n = 6, four times: get a uniform dataset, run with or without ε penalty: results are systematically better (once ex-æquo) with penalty, about 3 questions less to reach zero MMR (requires 35 to 90 questions depending on the dataset).
+
+We decide to stick with penalty 1.1× + ε because the rest of our data (probably) uses that setting.
+
