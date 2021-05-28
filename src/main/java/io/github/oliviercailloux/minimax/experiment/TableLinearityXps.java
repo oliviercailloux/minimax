@@ -35,16 +35,23 @@ public class TableLinearityXps {
 	public static void main(String[] args) throws Exception {
 		final TableLinearityXps tableLinXps = new TableLinearityXps();
 //		tableLinXps.runWithOracles(m, n, k, nbRuns);
-//		tableLinXps.runWithOracles(14, 9, 300, 10);
-//		tableLinXps.runWithOracles(6, 6, 90, 1);
-//		tableLinXps.runWithFile("sushi_short.soc", 450, 5);
-//		tableLinXps.runWithFile("skate.soc", 120, 5);
-		tableLinXps.runWithFile("tshirts.soc", 1000, 10);
+		tableLinXps.runWithOracles(5, 20, 200, 20);
+		tableLinXps.runWithOracles(10, 20, 700, 20);
+		tableLinXps.runWithOracles(11, 30, 1200, 20);
+		tableLinXps.runWithOracles(9, 146, 1000, 20);
+		tableLinXps.runWithOracles(14, 9, 550, 20);
+		tableLinXps.runWithOracles(15, 30, 1000, 20);
+		
+
+		tableLinXps.runWithFile("tshirts.soc", 1100, 20);
+		tableLinXps.runWithFile("skate.soc", 120, 20);
+		tableLinXps.runWithFile("courses.soc", 1000, 20);
+		
 	}
 
 	public void runWithOracles(int m, int n, int k, int nbRuns) throws IOException {
 		StrategyFactory factory = StrategyFactory.limited();
-		
+
 		final Path json = Path.of("experiments/Oracles/",
 				String.format("Oracles m = %d, n = %d, %d.json", m, n, nbRuns));
 		final ImmutableList<Oracle> oracles = ImmutableList.copyOf(JsonConverter.toOracles(Files.readString(json)));
@@ -59,8 +66,6 @@ public class TableLinearityXps {
 	public void runWithFile(String file, int k, int nbRuns) throws IOException {
 		StrategyFactory factory = StrategyFactory.limited();
 
-//		StrategyFactory factory = StrategyFactory.css();
-		
 		String path = "experiments/Oracles/" + file;
 		try (InputStream socStream = new FileInputStream(path)) {
 			final ProfileI p = new ReadProfile().createProfileFromStream(socStream);
@@ -71,12 +76,13 @@ public class TableLinearityXps {
 				profile.add(vpref);
 			}
 			final ImmutableList.Builder<Oracle> oraclesBuilder = ImmutableList.builder();
-			for(int i=0; i<nbRuns;i++) {
-				final Oracle o = Oracle.build(profile, Generator.genWeightsWithUniformDistribution(p.getNbAlternatives()));
+			for (int i = 0; i < nbRuns; i++) {
+				final Oracle o = Oracle.build(profile,
+						Generator.genWeightsWithUniformDistribution(p.getNbAlternatives()));
 				oraclesBuilder.add(o);
 			}
 			final ImmutableList<Oracle> oracles = oraclesBuilder.build();
-			final String prefixDescription = factory.getDescription() + ", " + file + ", k = " + k ;
+			final String prefixDescription = factory.getDescription() + ", " + file + ", k = " + k;
 
 			final Runs runs = runs(factory, oracles, k, prefixDescription, nbRuns);
 			final Stats stats = runs.getMinimalMaxRegretStats().get(runs.getK());
@@ -85,10 +91,10 @@ public class TableLinearityXps {
 		}
 
 	}
-	
+
 	public Runs runs(StrategyFactory factory, ImmutableList<Oracle> oracles, int k, String prefixDescription,
 			int nbRuns) throws IOException {
-		final Path outDir = Path.of("experiments/TableLinearity");
+		final Path outDir = Path.of("experiments/REDO/test");
 		Files.createDirectories(outDir);
 		final String prefixTemp = prefixDescription + ", ongoing";
 		final Path tmpJson = outDir.resolve(prefixTemp + ".json");
@@ -119,6 +125,5 @@ public class TableLinearityXps {
 
 		return Runs.of(factory, runsBuilder.build());
 	}
-	
 
 }

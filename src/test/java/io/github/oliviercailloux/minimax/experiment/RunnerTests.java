@@ -1,5 +1,6 @@
 package io.github.oliviercailloux.minimax.experiment;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static io.github.oliviercailloux.minimax.Basics.a1;
 import static io.github.oliviercailloux.minimax.Basics.a2;
 import static io.github.oliviercailloux.minimax.Basics.a3;
@@ -11,7 +12,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Vector;
+import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.apfloat.Apint;
 import org.junit.jupiter.api.Test;
@@ -20,6 +29,8 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.math.Quantiles;
+import com.google.common.math.Stats;
 
 import io.github.oliviercailloux.j_voting.VoterStrictPreference;
 import io.github.oliviercailloux.minimax.elicitation.Oracle;
@@ -78,4 +89,13 @@ class RunnerTests {
 		assertEquals(0.3333d, iterator.next().doubleValue(), 0.0001d);
 	}
 
+	@Test
+	void testQuartiles() {
+		List<Integer> list = IntStream.range(1, 21).boxed().collect(Collectors.toList());
+		assertEquals(Quantiles.quartiles().index(1).compute(list), 5.75d, 0.000001d);
+		assertEquals(Quantiles.quartiles().index(2).compute(list), 10.5d, 0.000001d);
+		assertEquals(Quantiles.quartiles().index(2).compute(list), Quantiles.median().compute(list));
+		assertEquals(Quantiles.quartiles().index(3).compute(list), 15.25d, 0.000001d);
+	}
+	
 }

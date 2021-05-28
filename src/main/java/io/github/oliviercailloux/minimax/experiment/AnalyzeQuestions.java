@@ -40,14 +40,14 @@ public class AnalyzeQuestions {
 
 	public static void main(String[] args) throws Exception {
 		final AnalyzeQuestions analyzeQst = new AnalyzeQuestions();
-		final Path dir = Path.of("experiments/REDO/questions");
-		final Path out = Path.of("experiments/REDO/questions/quests.csv");
+		final Path dir = Path.of("experiments/xps/questions");
+		final Path out = Path.of("experiments/xps/questions/quests.csv");
 		final ImmutableList<String> fileNames = ImmutableList.of("m5n20.json", "m10n20.json", "m11n30.json",
 				"tshirts.json", "courses.json", "m9n146.json", "m14n9.json", "skate.json", "m15n30.json");
 		
-	//	analyzeQst.analyzeQuestionsRegret(fileNames, out, dir);
-		
-		analyzeQst.questionsm10n20("m10n20.json",dir);
+		analyzeQst.analyzeQuestionsRegret(fileNames, out, dir);
+
+		//analyzeQst.questionsm10n20("m10n20.json", dir);
 	}
 
 	public void questionsm10n20(String file, Path dir) throws Exception {
@@ -55,21 +55,32 @@ public class AnalyzeQuestions {
 		StatisticsRuns statistics = new StatisticsRuns();
 		final NumberFormat formatter = NumberFormat.getNumberInstance(Locale.ENGLISH);
 		formatter.setMaximumFractionDigits(2);
-		for (Run run : runs.getRuns()) {
-			statQuestions(run, 400, 500, statistics);
+		LinkedList<Double> regrets = new LinkedList<>();
+		for (int i =0; i<runs.nbRuns();i++) {
+			Run run = runs.getRun(i);
+			statQuestions(run, 500, 500, statistics);
+			double r = run.getMinimalMaxRegrets(500).getMinimalMaxRegretValue();
+			regrets.add(r);
+			System.out.println("Run " + i + " MMR=" + r + " qC="
+					+ statistics.getRunToThreshold().getLast().getQuestionsComm());
 		}
 		final ImmutableList<Integer> qCommTR = statistics.getRunToThreshold().stream()
 				.map(PartialStatisticsRun::getQuestionsComm).collect(ImmutableList.toImmutableList());
 		Stats statsComm = Stats.of(qCommTR);
-		System.out.println("avgQuestComTR "+ formatter.format(statsComm.mean()));
-		System.out.println("cTR σ "+ formatter.format(statsComm.sampleStandardDeviation()));
+		System.out.println("avgQuestComTR " + formatter.format(statsComm.mean()));
+		System.out.println("cTR σ " + formatter.format(statsComm.sampleStandardDeviation()));
 		
-		final ImmutableList<Integer> qCommZR = statistics.getRunToZero().stream()
-				.map(PartialStatisticsRun::getQuestionsComm).collect(ImmutableList.toImmutableList());
-		statsComm = Stats.of(qCommZR);
-		System.out.println("avgQuestComZR "+ formatter.format(statsComm.mean()));
-		System.out.println("cZR σ "+ formatter.format(statsComm.sampleStandardDeviation()));
+		Stats statsR = Stats.of(regrets);
+		System.out.println("MMR " + formatter.format(statsR.mean()));
+		System.out.println("σ " + formatter.format(statsR.sampleStandardDeviation()));
+
+//		final ImmutableList<Integer> qCommZR = statistics.getRunToZero().stream()
+//				.map(PartialStatisticsRun::getQuestionsComm).collect(ImmutableList.toImmutableList());
+//		statsComm = Stats.of(qCommZR);
+//		System.out.println("avgQuestComZR "+ formatter.format(statsComm.mean()));
+//		System.out.println("cZR σ "+ formatter.format(statsComm.sampleStandardDeviation()));
 	}
+
 	
 	public void analyzeQuestionsRegret(ImmutableList<String> fileNames, Path fileOut, Path dir) throws Exception {
 		Files.deleteIfExists(fileOut);
