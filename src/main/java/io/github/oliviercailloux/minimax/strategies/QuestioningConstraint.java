@@ -11,34 +11,34 @@ import com.google.common.base.MoreObjects;
 
 import io.github.oliviercailloux.minimax.elicitation.QuestionType;
 
-@JsonbPropertyOrder({ "kind", "number" })
+@JsonbPropertyOrder({"kind", "number"})
 public class QuestioningConstraint {
-	@JsonbCreator
-	public static QuestioningConstraint of(@JsonbProperty("kind") QuestionType kind,
-			@JsonbProperty("number") int number) {
-		return new QuestioningConstraint(kind, number);
-	}
+  @JsonbCreator
+  public static QuestioningConstraint of(@JsonbProperty("kind") QuestionType kind,
+      @JsonbProperty("number") int number) {
+    return new QuestioningConstraint(kind, number);
+  }
 
-	private final QuestionType kind;
-	private final int number;
+  private final QuestionType kind;
+  private final int number;
 
-	private QuestioningConstraint(QuestionType kind, int number) {
-		this.kind = checkNotNull(kind);
-		checkArgument(number >= 1);
-		this.number = number;
-	}
+  private QuestioningConstraint(QuestionType kind, int number) {
+    this.kind = checkNotNull(kind);
+    checkArgument(number >= 1);
+    this.number = number;
+  }
 
-	public QuestionType getKind() {
-		return kind;
-	}
+  public QuestionType getKind() {
+    return kind;
+  }
 
-	public int getNumber() {
-		return number;
-	}
+  public int getNumber() {
+    return number;
+  }
 
-	@Override
-	public String toString() {
-		return MoreObjects.toStringHelper(this).add("kind", kind)
-				.add("number", number == Integer.MAX_VALUE ? "∞" : number).toString();
-	}
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this).add("kind", kind)
+        .add("number", number == Integer.MAX_VALUE ? "∞" : number).toString();
+  }
 }
