@@ -23,7 +23,7 @@ public class TableTwoPhaseXps {
 	public static void main(String[] args) throws Exception {
 		final TableTwoPhaseXps tableLinXps = new TableTwoPhaseXps();
 //		tableLinXps.runWithOracles(m, n, k, nbRuns);
-		tableLinXps.runWithOracles(10, 20, 500, 10);
+		tableLinXps.runWithOracles(10, 20, 500, 20);
 	}
 
 	public void runWithOracles(int m, int n, int k, int nbRuns) throws IOException {
@@ -33,6 +33,11 @@ public class TableTwoPhaseXps {
 			factoriesBuilder.add(StrategyFactory.limitedCommitteeThenVoters(qC));
 			factoriesBuilder.add(StrategyFactory.limitedVotersThenCommittee(qV));
 		}
+		factoriesBuilder.add(StrategyFactory.limitedCommitteeThenVoters(15));
+		factoriesBuilder.add(StrategyFactory.limitedVotersThenCommittee(485));
+		factoriesBuilder.add(StrategyFactory.limitedCommitteeThenVoters(30));
+		factoriesBuilder.add(StrategyFactory.limitedVotersThenCommittee(470));
+		
 		factoriesBuilder.build().stream().forEach(s->LOGGER.info(s.getDescription()));
 		final Path json = Path.of("experiments/Oracles/",
 				String.format("Oracles m = %d, n = %d, %d.json", m, n, nbRuns));
@@ -51,7 +56,7 @@ public class TableTwoPhaseXps {
 		final int n = oracles.stream().map(Oracle::getN).distinct().collect(MoreCollectors.onlyElement());
 		final int nbRuns = oracles.size();
 
-		final Path outDir = Path.of("experiments/TableTwoPhase");
+		final Path outDir = Path.of("experiments/REDO/TableTwoPhase500");
 		Files.createDirectories(outDir);
 		final String prefixDescription = factory.getDescription() + ", m = " + m + ", n = " + n + ", k = " + k;
 		final String prefixTemp = prefixDescription + ", ongoing";

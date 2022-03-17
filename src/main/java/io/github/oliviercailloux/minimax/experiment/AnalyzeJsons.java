@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.text.NumberFormat;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Locale;
 import java.util.stream.Stream;
@@ -20,6 +21,8 @@ import com.google.common.math.Stats;
 import com.univocity.parsers.csv.CsvWriter;
 import com.univocity.parsers.csv.CsvWriterSettings;
 
+import io.github.oliviercailloux.j_voting.Voter;
+import io.github.oliviercailloux.minimax.elicitation.Oracle;
 import io.github.oliviercailloux.minimax.elicitation.Question;
 import io.github.oliviercailloux.minimax.elicitation.QuestionType;
 import io.github.oliviercailloux.minimax.experiment.json.JsonConverter;
@@ -32,11 +35,79 @@ public class AnalyzeJsons {
 
 	public static void main(String[] args) throws Exception {
 		final AnalyzeJsons analyzeJsons = new AnalyzeJsons();
-		final Path outDir = Path.of("experiments/RealData");
-		analyzeJsons.writeFileMMRtoCsv(outDir.resolve("Css, sushi_short.soc, k = 600, nbRuns = 1.json"),
-				outDir.resolve("Css, sushi_short.soc.csv"), 1);
+		final Path dir = Path.of("experiments/New");
+		final Path out = Path.of("experiments/New/questsThreshold.csv");
+		final ImmutableList<String> fileNames = ImmutableList.of("m5n10.json", "m5n20.json", "m10n20.json",
+				"m10n30.json", "m15n30.json", "m14n9.json", "skate.json", "tshirt.json",
+				"courses.json");
+		
+		analyzeJsons.analyzeQuestZeroRegret(fileNames, out, dir);
+
+//		final Path outDir = Path.of("experiments/RealData");
+//		final String file = "Css, sushi.soc, k = 100000, ongoing";
+//		analyzeJsons.writeFileMMRtoCsv(outDir.resolve(file + ".json"), outDir.resolve(file + ".csv"), 1000);
 		// findAndAnalyze();
 		// analyzeJsons.analyzePenalty("analyzePenalty.txt");
+	}
+
+	public void analyzeQuestZeroRegret(ImmutableList<String> fileNames, Path fileOut, Path dir) throws Exception {
+		Files.deleteIfExists(fileOut);
+		Files.createFile(fileOut);
+
+		final StringWriter stringWriter = new StringWriter();
+		final NumberFormat formatter = NumberFormat.getNumberInstance(Locale.ENGLISH);
+		formatter.setMaximumFractionDigits(2);
+		final CsvWriter writer = new CsvWriter(stringWriter, new CsvWriterSettings());
+		writer.writeHeaders("file", "avgQuestCom", "c σ", "avgQuestVot", "v σ", "runs");
+
+		for (String file : fileNames) {
+			LOGGER.info("File: {}", file);
+			writer.addValue("file", file);
+			final Runs runs = JsonConverter.toRuns(Files.readString(Path.of(dir + "/" + file)));
+			LinkedList<Run> necRuns = new LinkedList<>();
+			double threshold = ((double) runs.getN())/((double) 10);
+			System.out.println(threshold);
+			for (Run run : runs.getRuns()) {
+				final ImmutableList<Question> questions = run.getQuestions();
+				final ImmutableList<Integer> times = run.getQuestionTimesMs();
+				LinkedList<Question> necQ = new LinkedList<>();
+				LinkedList<Integer> necTimes = new LinkedList<>();
+				HashMap<Voter, Integer> qstPerVot = new HashMap<>();
+				for (Voter v : run.getOracle().getProfile().keySet()) {
+					qstPerVot.put(v, 0);
+				}
+				for (int i = 0; i < run.getK(); i++) {
+					if (run.getMinimalMaxRegrets(i).getMinimalMaxRegretValue() > threshold) {
+						necQ.add(questions.get(i));
+						necTimes.add(times.get(i));
+						if (questions.get(i).getType() == QuestionType.VOTER_QUESTION) {
+							Voter v = questions.get(i).asQuestionVoter().getVoter();
+							qstPerVot.put(v, qstPerVot.get(v) + 1);
+						}
+					} else {
+						LOGGER.info("Tot questions: {} ", i - 1);
+						break;
+					}
+				}
+				necRuns.add(Run.of(run.getOracle(), necQ, necTimes));
+			}
+			LOGGER.info("Stats");
+			final ImmutableList<Integer> qC = necRuns.stream().map(Run::getNbQCommittee)
+					.collect(ImmutableList.toImmutableList());
+			final ImmutableList<Integer> qV = necRuns.stream().map(Run::getNbQVoters)
+					.collect(ImmutableList.toImmutableList());
+			Stats statsC = Stats.of(qC);
+			writer.addValue("avgQuestCom", formatter.format(statsC.mean()));
+			writer.addValue("c σ", formatter.format(statsC.sampleStandardDeviation()));
+			Stats statsV = Stats.of(qV);
+			writer.addValue("avgQuestVot", formatter.format(statsV.mean()));
+			writer.addValue("v σ", formatter.format(statsV.sampleStandardDeviation()));
+
+			writer.addValue("runs", runs.getRuns().size());
+			writer.writeValuesToRow();
+		}
+		Files.writeString(fileOut, stringWriter.toString());
+
 	}
 
 	public void analyzePenalty(String outFile) throws Exception {
@@ -55,7 +126,7 @@ public class AnalyzeJsons {
 		analyzeQuestions("Limited (×1.0 +1e-6) MAX, sushi_short.soc, k = 450, nbRuns = 5.json", file);
 	}
 
-	public void analyzeQuestions(String fileName, Path fileOut) throws Exception {
+	private void analyzeQuestions(String fileName, Path fileOut) throws Exception {
 		Files.writeString(fileOut, fileName + "\n", StandardOpenOption.APPEND);
 		final Path json = Path.of("experiments", "TableLinearity", fileName);
 		final Runs runs = JsonConverter.toRuns(Files.readString(json));

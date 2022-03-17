@@ -191,8 +191,10 @@ public class StrategyByMmr implements Strategy {
 		if (helper.getKnowledge().isProfileComplete() && !allowCommittee) {
 			LOGGER.debug("Asking a dummy question to voter.");
 			final UnmodifiableIterator<Alternative> iterator = helper.getKnowledge().getAlternatives().iterator();
-			return Question.toVoter(helper.getKnowledge().getVoters().iterator().next(), iterator.next(),
+			Question q= Question.toVoter(helper.getKnowledge().getVoters().iterator().next(), iterator.next(),
 					iterator.next());
+			LOGGER.info("Profile complete, question {}",q);
+			return q;
 		}
 
 		verify(allowCommittee || allowVoters);
